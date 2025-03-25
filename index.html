@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <title>Doimiy Ovozli AI</title>
+  <style>
+    body {
+      background: #101820;
+      color: #ffffff;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding-top: 100px;
+    }
+
+    h1 {
+      font-size: 2.8em;
+      color: #00ffcc;
+    }
+
+    #status {
+      font-size: 22px;
+      margin-top: 20px;
+      color: #ffa726;
+    }
+  </style>
+</head>
+<body>
+  <h1>🤖 Doimiy Ovozli AI</h1>
+  <div id="status">🎧 Tinglanyapti...</div>
+
+  <script>
+    const statusDiv = document.getElementById('status');
+    let audioPlaying = false;
+
+    function playAudioFromText(text) {
+      const audio = new Audio();
+      const file = `audio/${text}.mp3`;
+
+      fetch(file)
+        .then(res => {
+          if (!res.ok) throw new Error("Audio topilmadi");
+          audio.src = file;
+          return audio.play();
+        })
+        .catch(() => {
+          audio.src = 'audio/not_found.mp3';
+          audio.play();
+        })
+        .finally(() => {
+          audio.onended = () => {
+            audioPlaying = false;
+            startRecognition();
+          };
+        });
+    }
+
+    function startRecognition() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = "uz-UZ";
+      recognition.interimResults = false;
+      recognition.continuous = false;
+
+      recognition.onstart = () => {
+        statusDiv.innerText = "🎧 Gapiring...";
+      };
+
+      recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript.toLowerCase().trim();
+        statusDiv.innerText = `Siz dedingiz: "${text}"`;
+        audioPlaying = true;
+        playAudioFromText(text);
+      };
+
+      recognition.onerror = (e) => {
+        statusDiv.innerText = `⚠️ Xatolik: ${e.error}`;
+        setTimeout(() => startRecognition(), 1000);
+      };
+
+      recognition.onend = () => {
+        if (!audioPlaying) startRecognition();
+      };
+
+      recognition.start();
+    }
+
+    window.onload = () => {
+      startRecognition();
+    };
+  </script>
+</body>
+</html>
